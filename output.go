@@ -233,6 +233,11 @@ func printOutput(
 
 			if n, ok := nodeMap[key]; ok {
 				n.Attrs["tooltip"] = nodeTooltip
+				if isCaller {
+					n.Attrs["label"] = fmt.Sprintf("%s (%d)", n.ID, callerCnt)
+				} else {
+					n.Attrs["label"] = fmt.Sprintf("%s (%d)", n.ID, calleeCnt)
+				}
 				return n
 			}
 
@@ -347,6 +352,12 @@ func printOutput(
 			n := &dotNode{
 				ID:    node.Func.String(),
 				Attrs: attrs,
+			}
+
+			if isCaller {
+				n.Attrs["label"] = fmt.Sprintf("%s (%d)", n.ID, callerCnt)
+			} else {
+				n.Attrs["label"] = fmt.Sprintf("%s (%d)", n.ID, calleeCnt)
 			}
 
 			if c != nil {
