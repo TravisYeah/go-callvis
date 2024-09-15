@@ -139,6 +139,7 @@ func printOutput(
 		return false
 	}
 
+	calleeCnt := make(map[string]int)
 	count := 0
 	err := callgraph.GraphVisitEdges(cg, func(edge *callgraph.Edge) error {
 		count++
@@ -214,13 +215,24 @@ func printOutput(
 			fileCaller := fmt.Sprintf("%s:%d", filepath.Base(posCaller.Filename), posCaller.Line)
 			fileCallee := fmt.Sprintf("%s:%d", filepath.Base(posCallee.Filename), posCallee.Line)
 
+			callerCnt, ok := calleeCnt[edge.Caller.Func.Name()]
+			if !ok {
+				callerCnt = 0
+			}
+
+			calleeCnt, ok := calleeCnt[edge.Callee.Func.Name()]
+			if !ok {
+				calleeCnt = 0
+			}
+
 			if isCaller {
-				nodeTooltip = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCaller)
+				nodeTooltip = fmt.Sprintf("%s | defined in %s and called %d times", node.Func.String(), fileCaller, callerCnt)
 			} else {
-				nodeTooltip = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCallee)
+				nodeTooltip = fmt.Sprintf("%s | defined in %s and called %d times", node.Func.String(), fileCallee, calleeCnt)
 			}
 
 			if n, ok := nodeMap[key]; ok {
+				n.Attrs["tooltip"] = nodeTooltip
 				return n
 			}
 
@@ -346,6 +358,14 @@ func printOutput(
 			nodeMap[key] = n
 			return n
 		}
+
+		calleeCalls, ok := calleeCnt[edge.Callee.Func.Name()]
+		if !ok {
+			calleeCalls = 0
+		}
+		newCalleeCnt := calleeCalls + 1
+		calleeCnt[edge.Callee.Func.Name()] = newCalleeCnt
+
 		callerNode := sprintNode(edge.Caller, true)
 		calleeNode := sprintNode(edge.Callee, false)
 
